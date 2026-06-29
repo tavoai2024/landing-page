@@ -622,7 +622,7 @@ export default function App() {
             </div>
 
             <a
-              href="mailto:onboarding@tavo41.com?subject=tavo41%20Demo%20Request"
+              href="mailto:tavoai2024@gmail.com?subject=tavo41%20Demo%20Request"
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--accent)] px-4 py-3 text-[14px] font-semibold text-[#091015] transition-all hover:bg-[var(--accent2)]"
             >
               Email to book demo
