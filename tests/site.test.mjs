@@ -123,9 +123,20 @@ test('keeps navigation and the contact control stable on GitHub Pages', () => {
   assert.match(contactRule, /padding:\s*0 24px/);
 });
 
-test('provides one primary book-demo trigger', () => {
+test('provides one primary hero demo trigger', () => {
   assert.equal(app.match(/id="hero-book-demo-btn"/g)?.length, 1);
   assert.equal(app.match(/book-demo-btn/g)?.length, 1);
+});
+
+test('keeps a responsive floating demo CTA available outside the contact page', () => {
+  assert.equal(app.match(/className="button button-dark floating-cta"/g)?.length, 1);
+  assert.match(app, /\{!contactPage && \([\s\S]*className="button button-dark floating-cta"[\s\S]*href="\?page=contact"[\s\S]*onClick=\{openContactPage\}/);
+
+  const floatingRule = css.match(/\.floating-cta\s*\{([^}]+)\}/)?.[1] ?? '';
+  assert.match(floatingRule, /position:\s*fixed/);
+  assert.match(floatingRule, /z-index:\s*35/);
+  assert.match(floatingRule, /env\(safe-area-inset-bottom\)/);
+  assert.match(css, /@media \(max-width: 580px\)[\s\S]*\.floating-cta\s*\{[^}]*left:/);
 });
 
 test('avoids decorative numbering and repeated benefit cards', () => {

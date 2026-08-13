@@ -179,6 +179,25 @@ a:focus-visible {
   background: var(--paper);
 }
 
+.floating-cta {
+  position: fixed;
+  z-index: 35;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  min-height: 54px;
+  padding-inline: 24px;
+  border-color: var(--paper);
+  box-shadow: 0 12px 32px rgb(48 55 45 / 24%);
+}
+
+.floating-cta svg,
+.floating-cta:hover svg {
+  width: 16px;
+  margin-left: 14px;
+  opacity: 1;
+  transform: translateX(0);
+}
+
 .button-light:hover {
   border-color: var(--sage);
   background: var(--sage);
@@ -2070,6 +2089,13 @@ h1 {
 
 @media (max-width: 580px) {
   .site-shell { border-inline: 0; }
+  .floating-cta {
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: max(16px, env(safe-area-inset-left));
+    width: auto;
+    min-height: 56px;
+  }
   .hero-copy-inner { min-height: 540px; padding-block: 60px; }
   h1 { font-size: clamp(3.2rem, 16vw, 5rem); }
   .trust-strip { grid-template-columns: 1fr; }

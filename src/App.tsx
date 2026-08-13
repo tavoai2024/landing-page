@@ -514,6 +514,18 @@ export default function App() {
       </main>
       )}
 
+      {!contactPage && (
+        <a
+          className="button button-dark floating-cta"
+          href="?page=contact"
+          onClick={openContactPage}
+          aria-label="Book a demo"
+        >
+          <span>Book a demo</span>
+          <ArrowRight aria-hidden="true" />
+        </a>
+      )}
+
       <footer className="site-footer">
         <a className="brand footer-brand" href={siteBase} aria-label="tavo41 home"><img className="brand-logo" src={logoUrl} alt="tavo41" /></a>
         <p>AI voice access for healthcare teams.</p>
