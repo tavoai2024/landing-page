@@ -521,8 +521,9 @@ export default function App() {
           onClick={openContactPage}
           aria-label="Book a demo"
         >
+          <CalendarCheck className="floating-cta-icon" aria-hidden="true" />
           <span>Book a demo</span>
-          <ArrowRight aria-hidden="true" />
+          <ArrowRight className="floating-cta-arrow" aria-hidden="true" />
         </a>
       )}
 

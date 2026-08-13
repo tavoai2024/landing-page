@@ -131,12 +131,15 @@ test('provides one primary hero demo trigger', () => {
 test('keeps a responsive floating demo CTA available outside the contact page', () => {
   assert.equal(app.match(/className="button button-dark floating-cta"/g)?.length, 1);
   assert.match(app, /\{!contactPage && \([\s\S]*className="button button-dark floating-cta"[\s\S]*href="\?page=contact"[\s\S]*onClick=\{openContactPage\}/);
+  assert.match(app, /CalendarCheck className="floating-cta-icon"/);
 
   const floatingRule = css.match(/\.floating-cta\s*\{([^}]+)\}/)?.[1] ?? '';
   assert.match(floatingRule, /position:\s*fixed/);
   assert.match(floatingRule, /z-index:\s*35/);
   assert.match(floatingRule, /env\(safe-area-inset-bottom\)/);
-  assert.match(css, /@media \(max-width: 580px\)[\s\S]*\.floating-cta\s*\{[^}]*left:/);
+  assert.match(css, /@media \(max-width: 860px\)[\s\S]*\.floating-cta\s*\{[^}]*width:\s*52px[^}]*height:\s*52px[^}]*border-radius:\s*50%/);
+  assert.match(css, /@media \(max-width: 860px\)[\s\S]*\.floating-cta span,[\s\S]*\.floating-cta-arrow\s*\{[^}]*display:\s*none/);
+  assert.match(css, /@media \(max-width: 860px\)[\s\S]*\.floating-cta-icon\s*\{[^}]*display:\s*block/);
 });
 
 test('avoids decorative numbering and repeated benefit cards', () => {
