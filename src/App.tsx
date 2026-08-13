@@ -1,7 +1,6 @@
-import { useEffect, useState, type CSSProperties, type FormEvent, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent } from 'react';
 import {
   ArrowRight,
-  BadgeDollarSign,
   BellRing,
   CalendarCheck,
   ChartNoAxesCombined,
@@ -75,7 +74,7 @@ const coreCapabilities = [
   },
 ];
 
-const performanceOutcomes = [
+const impactOutcomes = [
   { kind: 'appointments', icon: CalendarCheck, before: 'Appointments missed', after: 'Appointments filled', values: [24, 38, 54, 72, 92] },
   { kind: 'revenue', icon: TrendingUp, before: 'Revenue left behind', after: 'Revenue increasing', values: [20, 32, 49, 71, 94] },
   { kind: 'experience', icon: SmilePlus, before: 'Patient access friction', after: 'Patient experience improved', values: [26, 42, 58, 76, 90] },
@@ -119,6 +118,10 @@ const conversationMessages = [
   { speaker: 'Assistant', message: 'You’re booked. I’ll send a confirmation with the visit details.', side: 'left' },
 ];
 
+const siteBase = import.meta.env.BASE_URL;
+const logoUrl = `${siteBase}tavo41_logo.svg`;
+type SectionId = 'healthcare' | 'capabilities' | 'impact' | 'getting-started';
+
 export default function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [journeyStep, setJourneyStep] = useState(0);
@@ -126,6 +129,8 @@ export default function App() {
   const [activeOutcome, setActiveOutcome] = useState(0);
   const [contactPage, setContactPage] = useState(() => new URLSearchParams(window.location.search).get('page') === 'contact');
   const [formStarted, setFormStarted] = useState(false);
+  const impactSectionRef = useRef<HTMLElement>(null);
+  const journeySectionRef = useRef<HTMLElement>(null);
 
   const openContactPage = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -133,6 +138,19 @@ export default function App() {
     setContactPage(true);
     setMobileNavOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openSection = (event: MouseEvent<HTMLAnchorElement>, sectionId: SectionId) => {
+    event.preventDefault();
+    window.history.pushState({}, '', `${siteBase}#${sectionId}`);
+    setContactPage(false);
+    setMobileNavOpen(false);
+
+    const scrollToTarget = () => {
+      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      document.getElementById(sectionId)?.scrollIntoView({ behavior, block: 'start' });
+    };
+    window.requestAnimationFrame(() => window.requestAnimationFrame(scrollToTarget));
   };
 
   useEffect(() => {
@@ -144,11 +162,46 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || contactPage) return;
-    const interval = window.setInterval(() => {
-      setActiveOutcome((current) => (current + 1) % performanceOutcomes.length);
-    }, 3200);
-    return () => window.clearInterval(interval);
+    if (contactPage) return;
+
+    let animationFrame = 0;
+    const getScrollIndex = (section: HTMLElement | null, itemCount: number) => {
+      if (!section) return null;
+
+      const rect = section.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const headerOffset = window.innerWidth <= 860 ? 64 : 72;
+      if (rect.top > headerOffset || rect.bottom < viewportHeight * 0.2) return null;
+
+      const scrollDistance = Math.max(rect.height - (viewportHeight - headerOffset), viewportHeight * 0.75);
+      const progress = Math.min(1, Math.max(0, (headerOffset - rect.top) / scrollDistance));
+      return Math.min(itemCount - 1, Math.floor(progress * itemCount));
+    };
+
+    const updateScrollStates = () => {
+      animationFrame = 0;
+      const impactIndex = getScrollIndex(impactSectionRef.current, impactOutcomes.length);
+      const journeyIndex = getScrollIndex(journeySectionRef.current, howItWorksSteps.length);
+
+      if (impactIndex !== null) setActiveOutcome(impactIndex);
+      if (journeyIndex !== null) {
+        setJourneyStep(journeyIndex);
+        if (journeyIndex > 0) setJourneyTouched(true);
+      }
+    };
+
+    const scheduleUpdate = () => {
+      if (animationFrame === 0) animationFrame = window.requestAnimationFrame(updateScrollStates);
+    };
+
+    scheduleUpdate();
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    return () => {
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+      if (animationFrame !== 0) window.cancelAnimationFrame(animationFrame);
+    };
   }, [contactPage]);
 
   const handleContactSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -171,14 +224,14 @@ export default function App() {
     <div className="site-shell">
       <header className="site-header">
         <nav className="site-nav" aria-label="Main navigation">
-          <a className="brand" href="/" aria-label="tavo41 home">
-            <img className="brand-logo" src="/tavo41_logo.svg" alt="tavo41" />
+          <a className="brand" href={siteBase} aria-label="tavo41 home">
+            <img className="brand-logo" src={logoUrl} alt="tavo41" />
           </a>
           <div className="desktop-nav">
-            <a href="/#healthcare">Who we serve</a>
-            <a href="/#capabilities">Capabilities</a>
-            <a href="/#performance">Performance</a>
-            <a href="/#getting-started">Getting started</a>
+            <a href="#healthcare" onClick={(event) => openSection(event, 'healthcare')}>Who we serve</a>
+            <a href="#capabilities" onClick={(event) => openSection(event, 'capabilities')}>Capabilities</a>
+            <a href="#impact" onClick={(event) => openSection(event, 'impact')}>Impact</a>
+            <a href="#getting-started" onClick={(event) => openSection(event, 'getting-started')}>Getting started</a>
           </div>
           <a className="nav-contact" href="?page=contact" onClick={openContactPage}>Contact</a>
           <button
@@ -194,10 +247,10 @@ export default function App() {
         </nav>
         {mobileNavOpen && (
           <div className="mobile-nav" id="mobile-navigation">
-            <a href="/#healthcare" onClick={() => setMobileNavOpen(false)}>Who we serve</a>
-            <a href="/#capabilities" onClick={() => setMobileNavOpen(false)}>Capabilities</a>
-            <a href="/#performance" onClick={() => setMobileNavOpen(false)}>Performance</a>
-            <a href="/#getting-started" onClick={() => setMobileNavOpen(false)}>Getting started</a>
+            <a href="#healthcare" onClick={(event) => openSection(event, 'healthcare')}>Who we serve</a>
+            <a href="#capabilities" onClick={(event) => openSection(event, 'capabilities')}>Capabilities</a>
+            <a href="#impact" onClick={(event) => openSection(event, 'impact')}>Impact</a>
+            <a href="#getting-started" onClick={(event) => openSection(event, 'getting-started')}>Getting started</a>
             <a className="mobile-contact" href="?page=contact" onClick={openContactPage}>Contact</a>
           </div>
         )}
@@ -214,10 +267,10 @@ export default function App() {
           </section>
           <section className="contact-form-section">
             <div className="contact-form-aside">
-              <img className="contact-logo" src="/tavo41_logo.svg" alt="tavo41" />
+              <img className="contact-logo" src={logoUrl} alt="tavo41" />
               <h2>Start a conversation.</h2>
               <p>This form is for business inquiries only. Do not include patient names, medical details, or urgent care requests.</p>
-              <a className="text-link" href="/">Back to the website <ArrowRight aria-hidden="true" /></a>
+              <a className="text-link" href={siteBase}>Back to the website <ArrowRight aria-hidden="true" /></a>
             </div>
             <form className="contact-form" onSubmit={handleContactSubmit} onChange={() => setFormStarted(false)}>
               <div className="form-field">
@@ -315,136 +368,139 @@ export default function App() {
           </div>
         </section>
 
-        <section className="performance-section section-border" id="performance">
-          <div className="performance-copy">
-            <span className="mono-label">Outcome-based pricing</span>
-            <BadgeDollarSign aria-hidden="true" />
-            <h2>Results shape what you pay.</h2>
-            <p>Pay for resolved outcomes—not promises, software seats, or activity.</p>
-          </div>
-          <div className="outcome-visualizer">
-            <div className="outcome-tabs" role="tablist" aria-label="Performance outcomes">
-              {performanceOutcomes.map(({ icon: Icon, after }, index) => (
-                <button
-                  key={after}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeOutcome === index}
-                  className={activeOutcome === index ? 'outcome-tab outcome-tab-active' : 'outcome-tab'}
-                  onClick={() => setActiveOutcome(index)}
-                >
-                  <Icon aria-hidden="true" /><span>{after}</span>
-                </button>
-              ))}
+        <section className="scroll-story impact-scroll-story section-border" id="impact" ref={impactSectionRef} data-scroll-index={activeOutcome}>
+          <div className="scroll-story-stage performance-section">
+            <div className="performance-copy">
+              <span className="mono-label">Operational impact</span>
+              <TrendingUp aria-hidden="true" />
+              <h2>Make every call count.</h2>
+              <p>Fill appointments, grow revenue, improve patient experience, and reduce administrative work.</p>
             </div>
-            <div className="outcome-stage" role="tabpanel" aria-live="polite">
-              <div className="outcome-transition">
-                <span>{performanceOutcomes[activeOutcome].before}</span>
-                <ArrowRight aria-hidden="true" />
-                <strong>{performanceOutcomes[activeOutcome].after}</strong>
+            <div className="outcome-visualizer">
+              <div className="outcome-tabs" role="tablist" aria-label="Operational impacts">
+                {impactOutcomes.map(({ icon: Icon, after }, index) => (
+                  <button
+                    key={after}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeOutcome === index}
+                    className={activeOutcome === index ? 'outcome-tab outcome-tab-active' : 'outcome-tab'}
+                    onClick={() => setActiveOutcome(index)}
+                  >
+                    <Icon aria-hidden="true" /><span>{after}</span>
+                  </button>
+                ))}
               </div>
-              <div className={`outcome-chart outcome-chart-${performanceOutcomes[activeOutcome].kind}`} key={performanceOutcomes[activeOutcome].after} aria-hidden="true">
-                {performanceOutcomes[activeOutcome].kind === 'appointments' && (
-                  <div className="calendar-animation">
-                    <div className="calendar-top"><span /><strong>Appointments</strong><span /></div>
-                    <div className="calendar-days">
-                      {Array.from({ length: 14 }, (_, day) => (
-                        <i className={day > 2 && day !== 7 && day !== 11 ? 'calendar-day-filled' : ''} key={day} style={{ '--fill-delay': `${day * 80}ms` } as CSSProperties}>
-                          {day + 1}{day > 2 && day !== 7 && day !== 11 && <Check aria-hidden="true" />}
-                        </i>
-                      ))}
+              <div className="outcome-stage" role="tabpanel" aria-live="polite">
+                <div className="outcome-transition">
+                  <span>{impactOutcomes[activeOutcome].before}</span>
+                  <ArrowRight aria-hidden="true" />
+                  <strong>{impactOutcomes[activeOutcome].after}</strong>
+                </div>
+                <div className={`outcome-chart outcome-chart-${impactOutcomes[activeOutcome].kind}`} key={impactOutcomes[activeOutcome].after} aria-hidden="true">
+                  {impactOutcomes[activeOutcome].kind === 'appointments' && (
+                    <div className="calendar-animation">
+                      <div className="calendar-top"><span /><strong>Appointments</strong><span /></div>
+                      <div className="calendar-days">
+                        {Array.from({ length: 14 }, (_, day) => (
+                          <i className={day > 2 && day !== 7 && day !== 11 ? 'calendar-day-filled' : ''} key={day} style={{ '--fill-delay': `${day * 80}ms` } as CSSProperties}>
+                            {day + 1}{day > 2 && day !== 7 && day !== 11 && <Check aria-hidden="true" />}
+                          </i>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {performanceOutcomes[activeOutcome].kind === 'revenue' && (
-                  <div className="revenue-animation">
-                    <span>Revenue</span>
-                    <svg viewBox="0 0 500 230" preserveAspectRatio="none">
-                      <path className="revenue-gridline" d="M20 55H480M20 115H480M20 175H480" />
-                      <path className="revenue-area" d="M28 198L125 177L220 148L315 111L405 68L470 28V215H28Z" />
-                      <path className="revenue-line" d="M28 198L125 177L220 148L315 111L405 68L470 28" />
-                      <path className="revenue-arrow" d="M444 25L470 28L465 54" />
-                      <circle cx="125" cy="177" r="5" /><circle cx="220" cy="148" r="5" /><circle cx="315" cy="111" r="5" /><circle cx="405" cy="68" r="5" />
-                    </svg>
-                  </div>
-                )}
-                {performanceOutcomes[activeOutcome].kind === 'experience' && (
-                  <div className="patient-animation">
-                    <div className="patient-avatar">
-                      <SmilePlus className="patient-smile-icon" />
+                  )}
+                  {impactOutcomes[activeOutcome].kind === 'revenue' && (
+                    <div className="revenue-animation">
+                      <span>Revenue</span>
+                      <svg viewBox="0 0 500 230" preserveAspectRatio="none">
+                        <path className="revenue-gridline" d="M20 55H480M20 115H480M20 175H480" />
+                        <path className="revenue-area" d="M28 198L125 177L220 148L315 111L405 68L470 28V215H28Z" />
+                        <path className="revenue-line" d="M28 198L125 177L220 148L315 111L405 68L470 28" />
+                        <circle cx="125" cy="177" r="5" /><circle cx="220" cy="148" r="5" /><circle cx="315" cy="111" r="5" /><circle cx="405" cy="68" r="5" />
+                      </svg>
                     </div>
-                    <div className="patient-message"><Check aria-hidden="true" /> Request resolved</div>
-                    <div className="patient-hearts"><i>♥</i><i>♥</i><i>♥</i></div>
-                  </div>
-                )}
-                {performanceOutcomes[activeOutcome].kind === 'costs' && (
-                  <div className="cost-animation">
-                    <span>Operating cost</span>
-                    <div className="chart-grid"><i /><i /><i /><i /></div>
-                    <div className="chart-bars">
-                      {performanceOutcomes[activeOutcome].values.map((value, index) => (
-                        <i key={`${value}-${index}`} style={{ '--bar-height': `${value}%`, '--bar-delay': `${index * 90}ms` } as CSSProperties} />
-                      ))}
+                  )}
+                  {impactOutcomes[activeOutcome].kind === 'experience' && (
+                    <div className="patient-animation">
+                      <div className="patient-avatar">
+                        <SmilePlus className="patient-smile-icon" />
+                      </div>
+                      <div className="patient-message"><Check aria-hidden="true" /> Request resolved</div>
+                      <div className="patient-hearts"><i>♥</i><i>♥</i><i>♥</i></div>
                     </div>
-                  </div>
-                )}
+                  )}
+                  {impactOutcomes[activeOutcome].kind === 'costs' && (
+                    <div className="cost-animation">
+                      <span>Operating cost</span>
+                      <div className="chart-grid"><i /><i /><i /><i /></div>
+                      <div className="chart-bars">
+                        {impactOutcomes[activeOutcome].values.map((value, index) => (
+                          <i key={`${value}-${index}`} style={{ '--bar-height': `${value}%`, '--bar-delay': `${index * 90}ms` } as CSSProperties} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="section-border" id="getting-started">
-          <div className="journey-heading sage-panel">
-            <div>
-              <span className="mono-label">Getting started</span>
-              <h2>Your path to smarter patient calls.</h2>
-            </div>
-          </div>
-          <div
-            className="journey-control"
-            style={{ '--journey-progress': `${(journeyStep / (howItWorksSteps.length - 1)) * 100}%` } as CSSProperties}
-          >
-            <div className="journey-range-wrap">
-              <label htmlFor="journey-range">Explore the setup journey</label>
-              <div className={`slider-hint${journeyTouched ? ' slider-hint-hidden' : ''}`} aria-hidden="true">
-                <ArrowRight />
+        <section className="scroll-story journey-scroll-story section-border" id="getting-started" ref={journeySectionRef} data-scroll-index={journeyStep}>
+          <div className="scroll-story-stage getting-started-stage">
+            <div className="journey-heading sage-panel">
+              <div>
+                <span className="mono-label">Getting started</span>
+                <h2>Your path to smarter patient calls.</h2>
               </div>
-              <input
-                id="journey-range"
-                className="journey-range"
-                type="range"
-                min="0"
-                max={howItWorksSteps.length - 1}
-                step="1"
-                value={journeyStep}
-                onChange={(event) => {
-                  setJourneyStep(Number(event.currentTarget.value));
-                  setJourneyTouched(true);
-                }}
-                aria-valuetext={`Step ${journeyStep}: ${howItWorksSteps[journeyStep].title}`}
-              />
             </div>
-            <ol className="journey-steps">
-              {howItWorksSteps.map(({ icon: Icon, title, summary, body }, index) => (
-                <li className={`journey-step${index === journeyStep ? ' journey-step-active' : ''}${index === howItWorksSteps.length - 1 ? ' journey-step-ready' : ''}`} key={title}>
-                  <button type="button" onClick={() => { setJourneyStep(index); setJourneyTouched(true); }} aria-expanded={index === journeyStep}>
-                  <div className="journey-step-top">
-                    <span>Step {index}</span>
-                    <Icon aria-hidden="true" />
-                  </div>
-                  <h3>{title}</h3>
-                  <p className="journey-summary">{summary}</p>
-                  {index === journeyStep && <p className="journey-detail">{body}</p>}
-                  {index === journeyStep && index === howItWorksSteps.length - 1 && (
-                    <div className="celebration" aria-hidden="true">
-                      <PartyPopper />
-                      {Array.from({ length: 10 }, (_, particle) => <i key={particle} />)}
+            <div
+              className="journey-control"
+              style={{ '--journey-progress': `${(journeyStep / (howItWorksSteps.length - 1)) * 100}%` } as CSSProperties}
+            >
+              <div className="journey-range-wrap">
+                <label htmlFor="journey-range">Explore the setup journey</label>
+                <div className={`slider-hint${journeyTouched ? ' slider-hint-hidden' : ''}`} aria-hidden="true">
+                  <ArrowRight />
+                </div>
+                <input
+                  id="journey-range"
+                  className="journey-range"
+                  type="range"
+                  min="0"
+                  max={howItWorksSteps.length - 1}
+                  step="1"
+                  value={journeyStep}
+                  onChange={(event) => {
+                    setJourneyStep(Number(event.currentTarget.value));
+                    setJourneyTouched(true);
+                  }}
+                  aria-valuetext={`Step ${journeyStep}: ${howItWorksSteps[journeyStep].title}`}
+                />
+              </div>
+              <ol className="journey-steps">
+                {howItWorksSteps.map(({ icon: Icon, title, summary, body }, index) => (
+                  <li className={`journey-step${index === journeyStep ? ' journey-step-active' : ''}${index === howItWorksSteps.length - 1 ? ' journey-step-ready' : ''}`} key={title}>
+                    <button type="button" onClick={() => { setJourneyStep(index); setJourneyTouched(true); }} aria-expanded={index === journeyStep}>
+                    <div className="journey-step-top">
+                      <span>Step {index}</span>
+                      <Icon aria-hidden="true" />
                     </div>
-                  )}
-                  </button>
-                </li>
-              ))}
-            </ol>
+                    <h3>{title}</h3>
+                    <p className="journey-summary">{summary}</p>
+                    {index === journeyStep && <p className="journey-detail">{body}</p>}
+                    {index === journeyStep && index === howItWorksSteps.length - 1 && (
+                      <div className="celebration" aria-hidden="true">
+                        <PartyPopper />
+                        {Array.from({ length: 10 }, (_, particle) => <i key={particle} />)}
+                      </div>
+                    )}
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
         </section>
 
@@ -459,7 +515,7 @@ export default function App() {
       )}
 
       <footer className="site-footer">
-        <a className="brand footer-brand" href="/" aria-label="tavo41 home"><img className="brand-logo" src="/tavo41_logo.svg" alt="tavo41" /></a>
+        <a className="brand footer-brand" href={siteBase} aria-label="tavo41 home"><img className="brand-logo" src={logoUrl} alt="tavo41" /></a>
         <p>AI voice access for healthcare teams.</p>
         <div><ShieldCheck aria-hidden="true" />Designed for secure operations</div>
       </footer>

@@ -195,8 +195,11 @@ a:focus-visible {
 
 .nav-contact {
   display: grid;
+  align-self: center;
   min-width: 116px;
-  margin: 11px 0 11px 18px;
+  min-height: 48px;
+  margin-left: 18px;
+  padding: 0 24px;
   place-items: center;
   border-radius: 999px;
   color: var(--paper);
@@ -737,6 +740,27 @@ h1 {
   line-height: 1.55;
 }
 
+.scroll-story {
+  position: relative;
+  height: 400vh;
+}
+
+.scroll-story-stage {
+  position: sticky;
+  top: 72px;
+  height: calc(100vh - 72px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.impact-scroll-story {
+  background: var(--sage);
+}
+
+.journey-scroll-story {
+  background: var(--paper);
+}
+
 .performance-section {
   display: grid;
   grid-template-columns: .9fr 1.1fr;
@@ -1017,11 +1041,10 @@ h1 {
   animation: revenue-area-in .7s ease-out 1s forwards;
 }
 
-.revenue-line,
-.revenue-arrow {
+.revenue-line {
   fill: none;
   stroke: #55644b;
-  stroke-width: 5;
+  stroke-width: 3;
   stroke-linecap: square;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
@@ -1031,11 +1054,6 @@ h1 {
   stroke-dasharray: 720;
   stroke-dashoffset: 720;
   animation: revenue-line-draw 1.35s cubic-bezier(.3, .7, .2, 1) forwards;
-}
-
-.revenue-arrow {
-  opacity: 0;
-  animation: revenue-arrow-in .25s ease-out 1.2s forwards;
 }
 
 .revenue-animation circle {
@@ -1053,7 +1071,6 @@ h1 {
 
 @keyframes revenue-line-draw { to { stroke-dashoffset: 0; } }
 @keyframes revenue-area-in { to { opacity: 1; } }
-@keyframes revenue-arrow-in { to { opacity: 1; } }
 @keyframes revenue-point-in { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
 
 .patient-animation {
@@ -1376,6 +1393,34 @@ h1 {
   align-items: end;
   padding: clamp(52px, 7vw, 100px) clamp(28px, 5vw, 76px);
   border-bottom: 1px solid var(--line);
+}
+
+.getting-started-stage {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--paper);
+}
+
+.getting-started-stage .journey-heading {
+  padding: clamp(22px, 3vh, 36px) clamp(28px, 5vw, 76px);
+}
+
+.getting-started-stage .journey-heading h2 {
+  margin-top: 10px;
+  font-size: clamp(2.4rem, 5.8vh, 4.4rem);
+}
+
+.getting-started-stage .journey-control {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: center;
+  padding: clamp(18px, 3vh, 32px) clamp(24px, 4vw, 52px);
+}
+
+.getting-started-stage .journey-steps {
+  min-height: 0;
+  align-items: center;
 }
 
 .journey-heading h2 {
@@ -1925,6 +1970,8 @@ h1 {
 
 @media (max-width: 860px) {
   html { scroll-padding-top: 65px; }
+  .scroll-story { height: 400svh; }
+  .scroll-story-stage { top: 64px; height: calc(100svh - 64px); }
   .site-nav { min-height: 64px; grid-template-columns: 1fr auto; }
   .brand { padding: 10px 18px; }
   .brand-logo { width: 118px; }
@@ -1977,7 +2024,11 @@ h1 {
   .capabilities-heading { grid-template-columns: 1fr; align-items: start; }
   .capabilities-heading > p { max-width: 620px; }
   .performance-section { grid-template-columns: 1fr; }
-  .performance-copy { border-right: 0; border-bottom: 1px solid var(--line); }
+  .impact-scroll-story .performance-section { grid-template-rows: auto minmax(0, 1fr); }
+  .impact-scroll-story .performance-copy { padding: 20px 24px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .impact-scroll-story .performance-copy > svg { display: none; }
+  .impact-scroll-story .performance-copy h2 { margin: 9px 0; font-size: clamp(2.2rem, 8vw, 3.6rem); }
+  .impact-scroll-story .performance-copy p { max-width: 620px; font-size: 13px; }
   .contact-intro { grid-template-columns: 1fr; align-items: start; }
   .contact-intro > p { max-width: 620px; }
   .contact-form-section { grid-template-columns: 1fr; }
@@ -2000,6 +2051,14 @@ h1 {
   .journey-steps { grid-template-columns: 1fr; gap: 12px; }
   .journey-step button { min-height: 158px; }
   .journey-step-top { margin-bottom: 24px; }
+  .getting-started-stage .journey-heading { padding: 18px 24px; }
+  .getting-started-stage .journey-heading h2 { margin-top: 7px; font-size: clamp(2rem, 7.5vw, 3.2rem); }
+  .getting-started-stage .journey-control { min-height: 0; grid-template-columns: 52px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); padding: 18px 22px; }
+  .getting-started-stage .journey-range { min-height: min(58svh, 500px); }
+  .getting-started-stage .journey-steps { display: block; align-self: center; }
+  .getting-started-stage .journey-step { display: none; }
+  .getting-started-stage .journey-step-active { display: block; }
+  .getting-started-stage .journey-step button { min-height: min(48svh, 390px); }
   .inline-cta { grid-template-columns: 1fr; }
   .inline-cta > p { max-width: 620px; }
   .team-grid, .values-grid { grid-template-columns: 1fr; }
@@ -2031,6 +2090,7 @@ h1 {
   .journey-heading h2 { font-size: clamp(2.7rem, 13vw, 4.2rem); }
   .journey-control { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; padding-inline: 18px; }
   .journey-range { width: 42px; }
+  .getting-started-stage .journey-control { padding: 14px 16px; }
   .card-icon { margin-bottom: 45px; }
   .capabilities-grid { grid-template-columns: 1fr; }
   .capability-card:nth-child(n) { min-height: auto; border-right: 0; border-bottom: 1px solid color-mix(in srgb, var(--paper) 28%, transparent); }
